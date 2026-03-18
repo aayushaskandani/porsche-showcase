@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PORSCHE — Automotive Showcase</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Rajdhani:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --c1: #e8352a;
+        --c2: #ff6b35;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        cursor: none;
+      }
+
+      /* ── CURSOR ─────────────────────────────────── */
+      #cursor {
+        position: fixed;
+        z-index: 9999;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--c1);
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.2s,
+          height 0.2s,
+          border-color 0.5s;
+        mix-blend-mode: difference;
+      }
+      #cursor-trail {
+        position: fixed;
+        z-index: 9998;
+        width: 34px;
+        height: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+      }
+
+      /* ── SCENE / BG ─────────────────────────────── */
+      #scene {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #bg-track {
+        position: absolute;
+        inset: 0;
+        width: 200vw;
+        height: 100%;
+        display: flex;
+        transition: transform 0.95s cubic-bezier(0.77, 0, 0.18, 1);
+        will-change: transform;
+      }
+      .bg-slide {
+        width: 100vw;
+        height: 100%;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .bg-img {
+        position: absolute;
+        inset: -6%;
+        width: 112%;
+        height: 112%;
+        background-size: cover;
+        background-position: center;
+        will-change: transform;
+        animation: slowZoom 20s ease-in-out infinite alternate;
+      }
+      @keyframes slowZoom {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.1);
+        }
+      }
+      .bg-overlay {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.08) 55%,
+            rgba(0, 0, 0, 0.45) 100%
+          ),
+          linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 55%);
+      }
+
+      /* ── TEXTURES ────────────────────────────────── */
+      #noise {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0.033;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      #scanlines {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0.025;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          #000 2px,
+          #000 4px
+        );
+      }
+
+      /* ── PROGRESS ────────────────────────────────── */
+      #prog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 50;
+        height: 2px;
+        background: linear-gradient(90deg, var(--c1), var(--c2));
+        transition:
+          width 0.95s cubic-bezier(0.77, 0, 0.18, 1),
+          background 0.6s;
+      }
+
+      /* ── CORNER BRACKETS ─────────────────────────── */
+      .br {
+        position: fixed;
+        z-index: 20;
+        pointer-events: none;
+        width: clamp(26px, 3.5vw, 46px);
+        height: clamp(26px, 3.5vw, 46px);
+        transition: border-color 0.6s;
+      }
+      .br-tl {
+        top: clamp(10px, 1.8vw, 20px);
+        left: clamp(10px, 1.8vw, 20px);
+        border-top: 2px solid var(--c1);
+        border-left: 2px solid var(--c1);
+      }
+      .br-tr {
+        top: clamp(10px, 1.8vw, 20px);
+        right: clamp(10px, 1.8vw, 20px);
+        border-top: 2px solid var(--c1);
+        border-right: 2px solid var(--c1);
+      }
+      .br-bl {
+        bottom: clamp(28px, 4.5vw, 50px);
+        left: clamp(10px, 1.8vw, 20px);
+        border-bottom: 2px solid var(--c1);
+        border-left: 2px solid var(--c1);
+      }
+      .br-br {
+        bottom: clamp(28px, 4.5vw, 50px);
+        right: clamp(10px, 1.8vw, 20px);
+        border-bottom: 2px solid var(--c1);
+        border-right: 2px solid var(--c1);
+      }
+
+      /* ── NAV ─────────────────────────────────────── */
+      #nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: clamp(14px, 2.5vw, 26px) clamp(20px, 4vw, 52px) 0;
+      }
+      .nav-logo {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(20px, 2.8vw, 30px);
+        letter-spacing: 0.2em;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .nav-logo span {
+        color: var(--c1);
+        transition: color 0.6s;
+      }
+      .nav-links {
+        display: flex;
+        gap: clamp(14px, 2.2vw, 34px);
+        list-style: none;
+      }
+      .nav-links a {
+        font-family: "Space Mono", monospace;
+        font-size: clamp(8px, 0.9vw, 10px);
+        letter-spacing: 0.2em;
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        text-transform: uppercase;
+        transition: color 0.3s;
+        position: relative;
+      }
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--c1);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition:
+          transform 0.3s,
+          background 0.6s;
+      }
+      .nav-links a:hover {
+        color: #fff;
+      }
+      .nav-links a:hover::after {
+        transform: scaleX(1);
+      }
+      .nav-count {
+        font-family: "Space Mono", monospace;
+        font-size: clamp(9px, 1vw, 12px);
+        color: rgba(255, 255, 255, 0.38);
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+      }
+      .nav-count em {
+        color: var(--c1);
+        font-style: normal;
+        transition: color 0.6s;
+      }
+
+      /* ── DOTS ────────────────────────────────────── */
+      #dots {
+        position: fixed;
+        right: clamp(12px, 2.2vw, 34px);
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+        cursor: none;
+        pointer-events: all;
+        transition:
+          background 0.4s,
+          transform 0.3s;
+      }
+      .dot.active {
+        background: var(--c1);
+        transform: scale(1.5);
+        transition:
+          background 0.6s,
+          transform 0.3s;
+      }
+
+      /* ── CONTENT LAYOUT ──────────────────────────── */
+      #content-wrap {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .slide-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0 clamp(20px, 4vw, 52px) clamp(44px, 6vw, 78px);
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: clamp(12px, 2.5vw, 36px);
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      /* ── LEFT ────────────────────────────────────── */
+      .left-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: "Space Mono", monospace;
+        font-size: clamp(7px, 0.85vw, 10px);
+        letter-spacing: 0.2em;
+        color: rgba(255, 255, 255, 0.7);
+        text-transform: uppercase;
+        margin-bottom: clamp(10px, 1.5vw, 18px);
+        pointer-events: all;
+      }
+      .pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--c1);
+        flex-shrink: 0;
+        animation: pulse 2s infinite;
+        transition: background 0.6s;
+      }
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 var(--c1);
+        }
+        70% {
+          box-shadow: 0 0 0 7px transparent;
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+
+      .headline {
+        line-height: 0.88;
+        margin-bottom: 2px;
+      }
+      .hl-solid {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(48px, 8.5vw, 138px);
+        color: #fff;
+        display: block;
+        letter-spacing: 0.04em;
+      }
+      .hl-outline {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(48px, 8.5vw, 138px);
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(255, 255, 255, 0.28);
+        display: block;
+        letter-spacing: 0.04em;
+      }
+      .hl-gradient {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(48px, 8.5vw, 138px);
+        background: linear-gradient(90deg, var(--c1), var(--c2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: block;
+        letter-spacing: 0.04em;
+      }
+
+      .subtitle {
+        font-family: "Rajdhani", sans-serif;
+        font-size: clamp(11px, 1.2vw, 15px);
+        font-weight: 400;
+        letter-spacing: 0.15em;
+        color: rgba(255, 255, 255, 0.48);
+        text-transform: uppercase;
+        line-height: 1.75;
+        margin-top: clamp(10px, 1.4vw, 16px);
+        margin-bottom: clamp(16px, 2.2vw, 30px);
+        max-width: 460px;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: clamp(10px, 1.3vw, 16px);
+        flex-wrap: wrap;
+        pointer-events: all;
+      }
+
+      .btn-p,
+      .btn-s {
+        font-family: "Space Mono", monospace;
+        font-size: clamp(8px, 0.9vw, 11px);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        padding: clamp(10px, 1.1vw, 14px) clamp(16px, 2.2vw, 28px);
+        cursor: none;
+        border: none;
+        clip-path: polygon(7px 0%, 100% 0%, calc(100% - 7px) 100%, 0% 100%);
+        transition:
+          transform 0.2s,
+          box-shadow 0.3s;
+      }
+      .btn-p {
+        color: #000;
+        background: var(--c1);
+        transition:
+          background 0.6s,
+          transform 0.2s,
+          box-shadow 0.3s;
+      }
+      .btn-p:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+      }
+      .btn-s {
+        color: rgba(255, 255, 255, 0.72);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.26);
+        transition:
+          border-color 0.3s,
+          color 0.3s,
+          transform 0.2s;
+      }
+      .btn-s:hover {
+        border-color: #fff;
+        color: #fff;
+        transform: translateY(-2px);
+      }
+
+      /* ── STATS CARD ──────────────────────────────── */
+      .stats-card {
+        flex-shrink: 0;
+        width: clamp(170px, 18vw, 250px);
+        background: rgba(255, 255, 255, 0.065);
+        backdrop-filter: blur(22px) saturate(160%);
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: clamp(16px, 1.8vw, 26px) clamp(16px, 2vw, 30px);
+        position: relative;
+        overflow: hidden;
+        pointer-events: all;
+      }
+      .stats-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--c1), var(--c2));
+        transition: background 0.6s;
+      }
+      .stat-item {
+        margin-bottom: clamp(12px, 1.6vw, 20px);
+      }
+      .stat-item:last-child {
+        margin-bottom: 0;
+      }
+      .stat-label {
+        font-family: "Space Mono", monospace;
+        font-size: clamp(6px, 0.75vw, 9px);
+        letter-spacing: 0.22em;
+        color: rgba(255, 255, 255, 0.36);
+        text-transform: uppercase;
+        margin-bottom: 3px;
+      }
+      .stat-value {
+        font-family: "Bebas Neue", cursive;
+        font-size: clamp(24px, 2.8vw, 36px);
+        color: #fff;
+        letter-spacing: 0.06em;
+        line-height: 1;
+      }
+      .stat-value span {
+        font-family: "Rajdhani", sans-serif;
+        font-size: clamp(9px, 0.9vw, 12px);
+        color: var(--c1);
+        letter-spacing: 0.1em;
+        margin-left: 3px;
+        vertical-align: middle;
+        transition: color 0.6s;
+      }
+      .stat-div {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.07);
+        margin: clamp(10px, 1.3vw, 16px) 0;
+      }
+
+      /* ── TICKER ──────────────────────────────────── */
+      #ticker {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        height: clamp(26px, 3.2vw, 34px);
+        background: rgba(0, 0, 0, 0.72);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+      }
+      .tick-label {
+        flex-shrink: 0;
+        font-family: "Space Mono", monospace;
+        font-size: clamp(6px, 0.75vw, 9px);
+        letter-spacing: 0.2em;
+        color: var(--c1);
+        padding: 0 clamp(10px, 1.3vw, 16px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        text-transform: uppercase;
+        white-space: nowrap;
+        transition: color 0.6s;
+      }
+      .tick-wrap {
+        flex: 1;
+        overflow: hidden;
+      }
+      .tick-track {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+      }
+      .tick-item {
+        font-family: "Rajdhani", sans-serif;
+        font-size: clamp(10px, 1vw, 12px);
+        font-weight: 500;
+        letter-spacing: 0.13em;
+        color: rgba(255, 255, 255, 0.38);
+        text-transform: uppercase;
+        padding: 0 clamp(18px, 2.2vw, 30px);
+      }
+      .tick-sep {
+        color: var(--c1);
+        margin: 0 4px;
+        transition: color 0.6s;
+      }
+
+      /* ── SCROLL HINT ─────────────────────────────── */
+      #hint {
+        position: fixed;
+        bottom: clamp(36px, 5vw, 56px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-family: "Space Mono", monospace;
+        font-size: clamp(6px, 0.75vw, 9px);
+        letter-spacing: 0.2em;
+        color: rgba(255, 255, 255, 0.25);
+        text-transform: uppercase;
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+      #hint svg {
+        animation: bY 0.9s ease-in-out infinite alternate;
+      }
+      @keyframes bY {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(5px);
+        }
+      }
+
+      /* ── RESPONSIVE ──────────────────────────────── */
+      @media (max-width: 760px) {
+        .nav-links {
+          display: none;
+        }
+        .slide-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 14px;
+        }
+        .stats-card {
+          width: 100%;
+        }
+        #dots {
+          display: none;
+        }
+      }
+      @media (max-width: 500px) {
+        .stats-card {
+          display: none;
+        }
+        .hl-outline {
+          -webkit-text-stroke-width: 1.5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cursor"></div>
+    <div id="cursor-trail"></div>
+    <div id="noise"></div>
+    <div id="scanlines"></div>
+    <div id="prog" style="width: 33.33%"></div>
+
+    <div class="br br-tl"></div>
+    <div class="br br-tr"></div>
+    <div class="br br-bl"></div>
+    <div class="br br-br"></div>
+
+    <nav id="nav">
+      <div class="nav-logo">PORSC<span>HE</span></div>
+      <ul class="nav-links">
+        <li><a href="#">Models</a></li>
+        <li><a href="#">Performance</a></li>
+        <li><a href="#">Configure</a></li>
+        <li><a href="#">Experience</a></li>
+      </ul>
+      <div class="nav-count"><em id="nc">01</em> / 03</div>
+    </nav>
+
+    <div id="scene">
+      <div id="bg-track">
+        <div class="bg-slide">
+          <div class="bg-img" id="bg1"></div>
+          <div class="bg-overlay"></div>
+        </div>
+        <div class="bg-slide">
+          <div class="bg-img" id="bg2"></div>
+          <div class="bg-overlay"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="content-wrap">
+      <div class="slide-content" id="sc">
+        <div class="left-content">
+          <div class="badge">
+            <div class="pulse-dot"></div>
+            <span id="badge"></span>
+          </div>
+          <div class="headline">
+            <span class="hl-solid" id="h1"></span>
+            <span class="hl-outline" id="h2"></span>
+            <span class="hl-gradient" id="h3"></span>
+          </div>
+          <p class="subtitle" id="sub"></p>
+          <div class="cta-row">
+            <button class="btn-p" id="btnp"></button>
+            <button class="btn-s">Watch Film</button>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-item">
+            <div class="stat-label" id="sl1"></div>
+            <div class="stat-value" id="sv1"></div>
+          </div>
+          <div class="stat-div"></div>
+          <div class="stat-item">
+            <div class="stat-label" id="sl2"></div>
+            <div class="stat-value" id="sv2"></div>
+          </div>
+          <div class="stat-div"></div>
+          <div class="stat-item">
+            <div class="stat-label" id="sl3"></div>
+            <div class="stat-value" id="sv3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dots">
+      <div class="dot active" data-i="0"></div>
+      <div class="dot" data-i="1"></div>
+      <div class="dot" data-i="2"></div>
+    </div>
+
+    <div id="ticker">
+      <div class="tick-label">Live</div>
+      <div class="tick-wrap"><div class="tick-track" id="tt"></div></div>
+    </div>
+
+    <div id="hint">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path
+          d="M7 2v10M7 12L3 8m4 4 4-4"
+          stroke="rgba(255,255,255,.3)"
+          stroke-width="1.2"
+          stroke-linecap="round"
+        />
+      </svg>
+      scroll
+    </div>
+
+    <script>
+      /* ── DATA ───────────────────────────────────── */
+      const SLIDES = [
+        {
+          bg: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=90&auto=format&fit=crop",
+          badge: "NOW AVAILABLE — 2025 MODEL YEAR",
+          h1: "PORSCHE",
+          h2: "911",
+          h3: "TURBO S",
+          sub: "Twin-turbocharged 3.8L flat-six. 650 PS.<br>0–100 in 2.7 seconds. The definitive 911.",
+          stats: [
+            { l: "0–100 km/h", v: "2.7", u: "SEC" },
+            { l: "Peak Power", v: "650", u: "PS" },
+            { l: "Top Speed", v: "330", u: "KM/H" },
+          ],
+          c1: "#E8352A",
+          c2: "#FF7040",
+          cta: "Configure Now",
+        },
+        {
+          bg: "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1920&q=90&auto=format&fit=crop",
+          badge: "LIMITED EDITION — 500 UNITS ONLY",
+          h1: "PORSCHE",
+          h2: "911",
+          h3: "GT3 RS",
+          sub: "Naturally aspirated 4.0L flat-six. 525 PS.<br>Race-born aerodynamics. Zero compromise.",
+          stats: [
+            { l: "0–100 km/h", v: "3.2", u: "SEC" },
+            { l: "Peak Power", v: "525", u: "PS" },
+            { l: "Downforce", v: "409", u: "KG" },
+          ],
+          c1: "#00C2FF",
+          c2: "#0055FF",
+          cta: "Request Access",
+        },
+        {
+          bg: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1920&q=90&auto=format&fit=crop",
+          badge: "HERITAGE SERIES — COLLECTOR EDITION",
+          h1: "PORSCHE",
+          h2: "918",
+          h3: "SPYDER",
+          sub: "Plug-in hybrid hypercar. 887 combined PS.<br>Racing DNA distilled. Only 918 built.",
+          stats: [
+            { l: "0–100 km/h", v: "2.5", u: "SEC" },
+            { l: "Combined Power", v: "887", u: "PS" },
+            { l: "Top Speed", v: "345", u: "KM/H" },
+          ],
+          c1: "#C9922A",
+          c2: "#E8C96A",
+          cta: "Explore Heritage",
+        },
+      ];
+
+      const TICKER = [
+        "Porsche 911 Turbo S",
+        "650 PS Twin-Turbo Flat-Six",
+        "0–100 in 2.7s",
+        "PASM Sport Suspension",
+        "Carbon Ceramic Brakes",
+        "Porsche 911 GT3 RS",
+        "525 PS Naturally Aspirated",
+        "Active Aerodynamics",
+        "Porsche 918 Spyder",
+        "887 PS Hybrid Drive",
+        "Hand-Stitched Leather Interior",
+        "Only 918 Units Built",
+      ];
+
+      /* ── STATE ──────────────────────────────────── */
+      let cur = 0,
+        busy = false;
+      const T = 950,
+        TOUT = 280;
+
+      /* ── ELEMENTS ───────────────────────────────── */
+      const BG1 = document.getElementById("bg1");
+      const BG2 = document.getElementById("bg2");
+      const track = document.getElementById("bg-track");
+      const sc = document.getElementById("sc");
+      const dots = document.querySelectorAll(".dot");
+      const nc = document.getElementById("nc");
+      const prog = document.getElementById("prog");
+      const hint = document.getElementById("hint");
+      const curEl = document.getElementById("cursor");
+      const trail = document.getElementById("cursor-trail");
+
+      /* ── COLORS ─────────────────────────────────── */
+      const setC = (c1, c2) => {
+        document.documentElement.style.setProperty("--c1", c1);
+        document.documentElement.style.setProperty("--c2", c2);
+      };
+
+      /* ── FILL ────────────────────────────────────── */
+      const fill = (d) => {
+        setC(d.c1, d.c2);
+        document.getElementById("badge").textContent = d.badge;
+        document.getElementById("h1").textContent = d.h1;
+        document.getElementById("h2").textContent = d.h2;
+        document.getElementById("h3").textContent = d.h3;
+        document.getElementById("sub").innerHTML = d.sub;
+        document.getElementById("btnp").textContent = d.cta;
+        document.getElementById("sl1").textContent = d.stats[0].l;
+        document.getElementById("sl2").textContent = d.stats[1].l;
+        document.getElementById("sl3").textContent = d.stats[2].l;
+        document.getElementById("sv1").innerHTML =
+          `${d.stats[0].v}<span>${d.stats[0].u}</span>`;
+        document.getElementById("sv2").innerHTML =
+          `${d.stats[1].v}<span>${d.stats[1].u}</span>`;
+        document.getElementById("sv3").innerHTML =
+          `${d.stats[2].v}<span>${d.stats[2].u}</span>`;
+      };
+
+      /* ── PRELOAD ─────────────────────────────────── */
+      const pre = (url) => {
+        const i = new Image();
+        i.src = url;
+      };
+
+      /* ── GOTO ────────────────────────────────────── */
+      function goTo(n) {
+        if (busy || n === cur) return;
+        busy = true;
+        hint.style.opacity = "0";
+        const dir = n > cur ? 1 : -1;
+        const d = SLIDES[n];
+
+        if (dir > 0) {
+          BG2.style.backgroundImage = `url('${d.bg}')`;
+          track.style.transition = `transform ${T}ms cubic-bezier(.77,0,.18,1)`;
+          track.style.transform = "translateX(-100vw)";
+        } else {
+          track.style.transition = "none";
+          track.style.transform = "translateX(-100vw)";
+          BG1.style.backgroundImage = `url('${d.bg}')`;
+          void track.offsetWidth;
+          track.style.transition = `transform ${T}ms cubic-bezier(.77,0,.18,1)`;
+          track.style.transform = "translateX(0)";
+        }
+
+        sc.style.transition = `opacity ${TOUT}ms ease, transform ${TOUT + 80}ms cubic-bezier(.6,0,.4,1)`;
+        sc.style.opacity = "0";
+        sc.style.transform = "translateY(36px)";
+
+        setTimeout(() => {
+          fill(d);
+          dots.forEach((dot, i) => dot.classList.toggle("active", i === n));
+          nc.textContent = String(n + 1).padStart(2, "0");
+          prog.style.width = ((n + 1) / SLIDES.length) * 100 + "%";
+
+          sc.style.transition = "none";
+          sc.style.transform = "translateY(-28px)";
+          sc.style.opacity = "0";
+          void sc.offsetWidth;
+          sc.style.transition = `opacity .55s ease .04s, transform .62s cubic-bezier(.22,1,.36,1) .04s`;
+          sc.style.opacity = "1";
+          sc.style.transform = "translateY(0)";
+
+          cur = n;
+
+          setTimeout(() => {
+            if (dir > 0) {
+              track.style.transition = "none";
+              BG1.style.backgroundImage = BG2.style.backgroundImage;
+              track.style.transform = "translateX(0)";
+              void track.offsetWidth;
+              track.style.transition = `transform ${T}ms cubic-bezier(.77,0,.18,1)`;
+            }
+            pre(SLIDES[(cur + 1) % SLIDES.length].bg);
+            busy = false;
+          }, T + 80);
+        }, TOUT);
+      }
+
+      const nxt = () => goTo((cur + 1) % SLIDES.length);
+      const prv = () => goTo((cur - 1 + SLIDES.length) % SLIDES.length);
+
+      /* ── NAVIGATION ──────────────────────────────── */
+      let wc = false;
+      window.addEventListener(
+        "wheel",
+        (e) => {
+          if (wc) return;
+          wc = true;
+          e.deltaY > 0 ? nxt() : prv();
+          setTimeout(() => (wc = false), T + 120);
+        },
+        { passive: true },
+      );
+
+      window.addEventListener("keydown", (e) => {
+        if (
+          !["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(e.key)
+        )
+          return;
+        e.preventDefault();
+        e.key === "ArrowDown" || e.key === "ArrowRight" ? nxt() : prv();
+      });
+
+      dots.forEach((d) =>
+        d.addEventListener("click", () => goTo(+d.dataset.i)),
+      );
+
+      let tx0 = 0,
+        ty0 = 0,
+        tt0 = 0,
+        swiping = false,
+        touchLocked = false;
+
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          if (touchLocked || busy) return; // don't even record if we're mid-transition
+          tx0 = e.touches[0].clientX;
+          ty0 = e.touches[0].clientY;
+          tt0 = Date.now();
+          swiping = true;
+        },
+        { passive: true },
+      );
+
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (!swiping) return;
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      document.addEventListener(
+        "touchend",
+        (e) => {
+          if (!swiping || touchLocked || busy) {
+            swiping = false;
+            return;
+          }
+          swiping = false;
+          if (Date.now() - tt0 > 700) return; // too slow = not a swipe
+          const dx = tx0 - e.changedTouches[0].clientX;
+          const dy = ty0 - e.changedTouches[0].clientY;
+          const adx = Math.abs(dx),
+            ady = Math.abs(dy);
+          if (adx < 20 && ady < 20) return; // too short = tap, ignore
+          // Lock touch until full transition is done
+          touchLocked = true;
+          setTimeout(() => {
+            touchLocked = false;
+          }, T + 200);
+          if (adx > ady) {
+            dx > 0 ? nxt() : prv();
+          } else {
+            dy > 0 ? nxt() : prv();
+          }
+        },
+        { passive: true },
+      );
+
+      /* ── CURSOR + PARALLAX ───────────────────────── */
+      let mx = 0,
+        my = 0,
+        lx = 0,
+        ly = 0;
+      document.addEventListener("mousemove", (e) => {
+        mx = e.clientX;
+        my = e.clientY;
+        curEl.style.left = mx + "px";
+        curEl.style.top = my + "px";
+        const px = (e.clientX / window.innerWidth - 0.5) * 22;
+        const py = (e.clientY / window.innerHeight - 0.5) * 14;
+        BG1.style.transform = `translate(${px}px,${py}px) scale(1.06)`;
+      });
+      (function raf() {
+        lx += (mx - lx) * 0.11;
+        ly += (my - ly) * 0.11;
+        trail.style.left = lx + "px";
+        trail.style.top = ly + "px";
+        requestAnimationFrame(raf);
+      })();
+      document.querySelectorAll("button,a,.dot").forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          curEl.style.width = "24px";
+          curEl.style.height = "24px";
+        });
+        el.addEventListener("mouseleave", () => {
+          curEl.style.width = "12px";
+          curEl.style.height = "12px";
+        });
+      });
+
+      /* ── TICKER ──────────────────────────────────── */
+      (() => {
+        const tt = document.getElementById("tt");
+        const all = [...TICKER, ...TICKER];
+        tt.innerHTML = all
+          .map(
+            (t) =>
+              `<span class="tick-item">${t}<span class="tick-sep">✦</span></span>`,
+          )
+          .join("");
+        requestAnimationFrame(() => {
+          const half = tt.scrollWidth / 2;
+          const speed = Math.round(half / 55);
+          const s = document.createElement("style");
+          s.textContent = `.tick-track{animation:tick ${speed}s linear infinite}@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-${half}px)}}`;
+          document.head.appendChild(s);
+        });
+      })();
+
+      /* ── INIT ────────────────────────────────────── */
+      BG1.style.backgroundImage = `url('${SLIDES[0].bg}')`;
+      fill(SLIDES[0]);
+      prog.style.width = "33.33%";
+      pre(SLIDES[1].bg);
+      setTimeout(() => (hint.style.opacity = ".65"), 2500);
+      setTimeout(() => (hint.style.opacity = "0"), 6000);
+    </script>
+  </body>
+</html>
